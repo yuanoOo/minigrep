@@ -6,7 +6,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     let result = match config.case_sensitive {
         true => search(&config.query, &contents),
-        false => search_case_insentive(&config.query, &contents)    
+        false => search_case_insensitive(&config.query, &contents)
     };
 
     for line in result{
@@ -33,37 +33,33 @@ impl Config {
         let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
 
         Ok(Config {
-            query: query,
-            file_name: file_name,
-            case_sensitive: case_sensitive,
+            query,
+            file_name,
+            case_sensitive,
         })
     }
 }
 
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str>{
-    let mut results = vec![];
-
-    for line in contents.lines(){
-        if line.contains(query){
-            results.push(line);
-        }
-    }
-
-    results
+    contents.lines().filter(|line| line.contains(query)).collect()
 }
 
-pub fn search_case_insentive<'a>(query: &str, contents: &'a str) -> Vec<&'a str>{
-    let mut results = vec![];
-    
-    let query = query.to_lowercase();
+pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str>{
+    // let mut results = vec![];
+    //
+    // let query = query.to_lowercase();
+    //
+    // for line in contents.lines(){
+    //     if line.to_lowercase().contains(&query){
+    //         results.push(line);
+    //     }
+    // }
+    //
+    // results
 
-    for line in contents.lines(){
-        if line.to_lowercase().contains(&query){
-            results.push(line);
-        }
-    }
-
-    results
+    contents.lines()
+        .filter(|line| line.to_lowercase().contains(query.to_lowercase().as_str()))
+        .collect()
 }
 
 #[cfg(test)]
@@ -82,7 +78,7 @@ pick three.";
     }
 
     #[test]
-    fn one_result_case_insentive(){
+    fn one_result_case_insensitive(){
         let query = "duct";
         let contents = "\
 Rust:
@@ -90,6 +86,6 @@ safe, fast, productive.
 pick three.
 Duct    ";
 
-        assert_eq!(vec!["safe, fast, productive."], search_case_insentive(query, contents))
+        assert_eq!(vec!["safe, fast, productive."], search_case_insensitive(query, contents))
     }
 }
